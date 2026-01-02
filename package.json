@@ -1,0 +1,7 @@
+{
+  "name": "mafia-deluxe",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"cd server && node index.js\" \"cd client && npm start\""
+  }
+}
