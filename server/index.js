@@ -2,14 +2,25 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 
+// --- TA CZĘŚĆ NAPRAWIA "NOT FOUND" ---
+// Serwujemy pliki zbudowanej aplikacji React
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// Każde zapytanie kierujemy do pliku index.html gry
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+// --------------------------------------
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // Ważne dla gry przez internet
+        origin: "*",
         methods: ["GET", "POST"]
     }
 });
@@ -17,9 +28,6 @@ const io = new Server(server, {
 const rooms = {};
 
 io.on('connection', (socket) => {
-    console.log('Połączono z ID:', socket.id);
-
-    // TWORZENIE POKOJU
     socket.on('createRoom', (username) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomCode] = {
@@ -27,10 +35,8 @@ io.on('connection', (socket) => {
         };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, players: rooms[roomCode].players });
-        console.log(`Pokój ${roomCode} stworzony przez ${username}`);
     });
 
-    // DOŁĄCZANIE DO POKOJU
     socket.on('joinRoom', ({ roomCode, username }) => {
         const code = roomCode.toUpperCase();
         if (rooms[code]) {
@@ -44,28 +50,20 @@ io.on('connection', (socket) => {
         }
     });
 
-    // START GRY (Rozdawanie ról)
     socket.on('startGame', (roomCode) => {
         const code = roomCode.toUpperCase();
         if (rooms[code]) {
-            let roles = ['Mafia', 'Policjant', 'Lekarz', 'Obywatel', 'Obywatel', 'Obywatel'];
+            let roles = ['Mafia', 'Policjant', 'Lekarz', 'Obywatel', 'Obywatel'];
             const roomPlayers = rooms[code].players;
-            
-            // Losowanie ról
             const shuffledRoles = roles.slice(0, roomPlayers.length).sort(() => Math.random() - 0.5);
-            
             roomPlayers.forEach((player, index) => {
                 io.to(player.id).emit('yourRole', shuffledRoles[index]);
             });
         }
     });
-
-    socket.on('disconnect', () => {
-        console.log('Gracz rozłączony');
-    });
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log(`Serwer działa na porcie ${PORT}`);
 });
