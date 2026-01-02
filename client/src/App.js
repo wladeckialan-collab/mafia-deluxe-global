@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 
 // Gdy testujesz na komputerze: http://localhost:3001
 // Gdy wrzucasz do sieci: wklej tutaj link od Render (np. https://mafia.onrender.com)
-const SOCKET_URL = "http://localhost:3001"; 
+const SOCKET_URL = "https://mafia-gra.onrender.com"; // Tutaj wklej SWÓJ link
 const socket = io(SOCKET_URL);
 
 function App() {
