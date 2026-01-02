@@ -7,16 +7,6 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// --- TA CZĘŚĆ NAPRAWIA "NOT FOUND" ---
-// Serwujemy pliki zbudowanej aplikacji React
-app.use(express.static(path.join(__dirname, '../client/build')));
-
-// Każde zapytanie kierujemy do pliku index.html gry
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-});
-// --------------------------------------
-
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -26,6 +16,10 @@ const io = new Server(server, {
 });
 
 const rooms = {};
+
+// --- SERWOWANIE PLIKÓW GRY ---
+const __dirname_resolved = path.resolve();
+app.use(express.static(path.join(__dirname_resolved, 'client', 'build')));
 
 io.on('connection', (socket) => {
     socket.on('createRoom', (username) => {
@@ -63,7 +57,11 @@ io.on('connection', (socket) => {
     });
 });
 
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname_resolved, 'client', 'build', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Serwer działa na porcie ${PORT}`);
 });
