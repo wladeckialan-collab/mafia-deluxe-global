@@ -1,7 +1,6 @@
 {
   "name": "mafia-deluxe",
   "version": "1.0.0",
-  "description": "Gra Mafia Online",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
