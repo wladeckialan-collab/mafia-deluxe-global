@@ -9,24 +9,19 @@ app.use(cors());
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+    cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
 const rooms = {};
 
-// --- SERWOWANIE PLIKÓW GRY ---
-const __dirname_resolved = path.resolve();
-app.use(express.static(path.join(__dirname_resolved, 'client', 'build')));
+// OBSŁUGA PLIKÓW - PANCERNA ŚCIEŻKA
+const buildPath = path.join(__dirname, '..', 'client', 'build');
+app.use(express.static(buildPath));
 
 io.on('connection', (socket) => {
     socket.on('createRoom', (username) => {
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-        rooms[roomCode] = {
-            players: [{ id: socket.id, name: username, isHost: true }]
-        };
+        rooms[roomCode] = { players: [{ id: socket.id, name: username, isHost: true }] };
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, players: rooms[roomCode].players });
     });
@@ -34,13 +29,10 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ({ roomCode, username }) => {
         const code = roomCode.toUpperCase();
         if (rooms[code]) {
-            const newPlayer = { id: socket.id, name: username, isHost: false };
-            rooms[code].players.push(newPlayer);
+            rooms[code].players.push({ id: socket.id, name: username, isHost: false });
             socket.join(code);
             io.to(code).emit('updatePlayerList', rooms[code].players);
             socket.emit('joinSuccess', { roomCode: code });
-        } else {
-            socket.emit('error', 'Pokój nie istnieje!');
         }
     });
 
@@ -50,18 +42,17 @@ io.on('connection', (socket) => {
             let roles = ['Mafia', 'Policjant', 'Lekarz', 'Obywatel', 'Obywatel'];
             const roomPlayers = rooms[code].players;
             const shuffledRoles = roles.slice(0, roomPlayers.length).sort(() => Math.random() - 0.5);
-            roomPlayers.forEach((player, index) => {
-                io.to(player.id).emit('yourRole', shuffledRoles[index]);
-            });
+            roomPlayers.forEach((p, i) => io.to(p.id).emit('yourRole', shuffledRoles[i]));
         }
     });
 });
 
+// Jeśli nie znajdzie pliku, zawsze wysyłaj index.html gry
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname_resolved, 'client', 'build', 'index.html'));
+    res.sendFile(path.join(buildPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Serwer działa na porcie ${PORT}`);
+    console.log(`Serwer biega na porcie ${PORT}`);
 });
