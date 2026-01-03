@@ -1,7 +1,6 @@
 {
   "name": "mafia-deluxe",
   "version": "1.0.0",
-  "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "build": "npm install && cd client && npm install && npm run build"
